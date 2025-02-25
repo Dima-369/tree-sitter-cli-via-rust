@@ -1,7 +1,7 @@
 use clap::{Arg, Command};
 use std::fs;
-use tree_sitter::Parser;
 use tree_sitter::Query;
+use tree_sitter::{Parser, StreamingIterator};
 
 static LANGUAGES: [&str; 2] = ["kotlin", "php"];
 
@@ -30,21 +30,23 @@ fn get_command() -> Command {
         )
 }
 
-fn create_parser(language: &str) -> Parser {
-    let mut parser = Parser::new();
-    let result = match language {
-        "kotlin" => parser.set_language(&tree_sitter_kotlin::language()),
-        "php" => {
-            let language = tree_sitter_php::LANGUAGE_PHP;
-            parser.set_language(&language.into())
-        }
+fn get_parser_language(language: &str) -> tree_sitter_language::LanguageFn {
+    match language {
+        "kotlin" => tree_sitter_kotlin_ng::LANGUAGE,
+        "php" => tree_sitter_php::LANGUAGE_PHP,
         _ => panic!("Unsupported language: {}", language),
-    };
-    // TODO show parsed error
-    result.expect(&format!(
-        "Error loading specified {} language grammar",
-        language
-    ))
+    }
+}
+
+fn create_parser(language: &str, parser_language: tree_sitter_language::LanguageFn) -> Parser {
+    let mut parser = Parser::new();
+    match parser.set_language(&parser_language.into()) {
+        Ok(_) => parser,
+        Err(err) => panic!(
+            "Error loading specified {} language grammar: {:?}",
+            language, err
+        ),
+    }
 }
 
 fn main() {
@@ -65,17 +67,19 @@ fn main() {
         "/Users/dima/Developer/java-tree-sitter/tree-sitter-kotlin/queries/highlights.scm",
     )
     .unwrap();
-    let parser = create_parser(language);
+    let parser_language = get_parser_language(language);
+    let mut parser = create_parser(language, parser_language);
     let parsed = parser.parse(code, None);
     let tree = parsed.expect(&format!(
         "Failed to parse passed code with language {}",
         language
     ));
     let root_node = tree.root_node();
-    let query = Query::new(&tree_sitter_language, &*highlights).expect("Failed to create query");
+    // let query = Query::new(&tree_sitter_kotlin_ng::LANGUAGE.into(), &*highlights).expect("Failed to create query");
+    let query = Query::new(&parser_language.into(), &*highlights).expect("Failed to create query");
     let mut query_cursor = tree_sitter::QueryCursor::new();
-    let matches = query_cursor.matches(&query, root_node, code.as_bytes());
-    for m in matches {
+    let mut matches = query_cursor.matches(&query, root_node, code.as_bytes());
+    while let Some(m) = matches.next() {
         for capture in m.captures {
             let node = capture.node;
             let capture_name = query.capture_names()[capture.index as usize];

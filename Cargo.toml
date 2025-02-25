@@ -6,9 +6,10 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.31", features = ["derive"] }
 # do not use latest version, since tree-sitter-kotlin forces an old version
-tree-sitter = "0.22.6"
-tree-sitter-highlight = "0.22.6"
-tree-sitter-kotlin = "0.3.8"
+tree-sitter = "0.25.2"
+#tree-sitter-kotlin = "0.3.8"
+tree-sitter-kotlin-ng = "1.1.0"
+tree-sitter-language = "0.1.5"
 tree-sitter-php = "0.23.11"
 
 #            MarkdownLanguageMapping(listOf("json", "json"), Language.JSON),
