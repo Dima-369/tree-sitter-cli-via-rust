@@ -1,0 +1,19 @@
+[package]
+name = "tree-sitter-cli-via-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4.5.31"
+tree-sitter = "0.22.6"
+tree-sitter-highlight = "0.22.6"
+#tree-sitter-kotlin-ng = "1.1.0"
+tree-sitter-kotlin = "0.3.8"
+
+#            MarkdownLanguageMapping(listOf("json", "json"), Language.JSON),
+#            MarkdownLanguageMapping(listOf("php"), Language.PHP),
+#            MarkdownLanguageMapping(listOf("bash", "shell", "sh"), Language.BASH),
+#            MarkdownLanguageMapping(listOf("dockerfile", "docker"), Language.DOCKERFILE),
+#            MarkdownLanguageMapping(listOf("python", "py"), Language.PYTHON),
+#            MarkdownLanguageMapping(listOf("java"), Language.JAVA),
+
