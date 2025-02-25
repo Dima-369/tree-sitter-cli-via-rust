@@ -11,7 +11,7 @@ fn main() {
     val x: Int,
     val y: Int
   )
-"#
+"#;
     let mut parser = Parser::new();
     parser
         .set_language(&tree_sitter_kotlin::language())
