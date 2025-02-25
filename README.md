@@ -1,6 +1,6 @@
 # Setup
 
-Only tested on macOS. Requires `brew install tree-sitter`.
+Only tested on macOS. Requires `brew install tree-sitter`
 
 Make sure to clone all git submodules for `Kotlin Emacs` since it requires the `highlights.scm` files for
 highlighting code.
@@ -22,7 +22,7 @@ Options:
 
 # Output
 
-The format is one per line: `{captureName} {byteRangeStart} {byteRangeEnd}`.
+The format is one per line: `{captureName} {byteRangeStart} {byteRangeEnd}`
 
 ```
 keyword 3 7
