@@ -2,7 +2,15 @@ use clap::{Arg, Command};
 use tree_sitter::Query;
 use tree_sitter::{Parser, StreamingIterator};
 
-static LANGUAGES: [&str; 7] = ["kotlin", "php", "bash", "dockerfile", "python", "java", "json"];
+static LANGUAGES: [&str; 7] = [
+    "kotlin",
+    "php",
+    "bash",
+    "json",
+    "dockerfile",
+    "python",
+    "java",
+];
 enum Language {
     Kotlin,
     Php,
@@ -11,6 +19,18 @@ enum Language {
     Dockerfile,
     Python,
     Java,
+}
+fn map_language_to_enum(language: &str) -> Language {
+    match language {
+        "kotlin" => Language::Kotlin,
+        "php" => Language::Php,
+        "bash" => Language::Bash,
+        "json" => Language::Json,
+        "dockerfile" => Language::Dockerfile,
+        "python" => Language::Python,
+        "java" => Language::Java,
+        _ => panic!("Unsupported language: {}", language),
+    }
 }
 
 fn get_command() -> Command {
@@ -38,18 +58,6 @@ fn get_command() -> Command {
         )
 }
 
-fn map_language_to_enum(language: &str) -> Language {
-    match language {
-        "kotlin" => Language::Kotlin,
-        "php" => Language::Php,
-        "bash" => Language::Bash,
-        "dockerfile" => Language::Dockerfile,
-        "python" => Language::Python,
-        "java" => Language::Java,
-        _ => panic!("Unsupported language: {}", language),
-    }
-}
-
 fn main() {
     let args = get_command().get_matches();
     let code = args.get_one::<String>("code").unwrap();
@@ -62,7 +70,6 @@ fn main() {
         Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
         Language::Bash => parser.set_language(&tree_sitter_bash::LANGUAGE.into()),
         Language::Json => parser.set_language(&tree_sitter_json::LANGUAGE.into()),
-        // TODO fix this
         Language::Dockerfile => parser.set_language(&tree_sitter_dockerfile::language().into()),
         Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
         Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
