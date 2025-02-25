@@ -1,3 +1,10 @@
+# Setup
+
+Only tested on macOS. Requires `brew install tree-sitter`.
+
+Make sure to clone all git submodules for `Kotlin Emacs` since it requires the `highlights.scm` files for
+highlighting code.
+
 # CLI `--help` output
 
 ```
