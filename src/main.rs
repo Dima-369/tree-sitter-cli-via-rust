@@ -32,6 +32,18 @@ fn map_language_to_enum(language: &str) -> Language {
         _ => panic!("Unsupported language: {}", language),
     }
 }
+fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: Language) {
+    match language_enum {
+        Language::Kotlin => parser.set_language(&tree_sitter_kotlin::language()),
+        Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
+        Language::Bash => parser.set_language(&tree_sitter_bash::LANGUAGE.into()),
+        Language::Json => parser.set_language(&tree_sitter_json::LANGUAGE.into()),
+        Language::Dockerfile => parser.set_language(&tree_sitter_dockerfile::language().into()),
+        Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
+        Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
+    }
+        .expect(&format!("Error loading {} grammar", language));
+}
 
 fn get_command() -> Command {
     Command::new("Tree-sitter Syntax Highlighter")
@@ -65,16 +77,7 @@ fn main() {
     let highlights = args.get_one::<String>("highlights").unwrap();
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
-    match language_enum {
-        Language::Kotlin => parser.set_language(&tree_sitter_kotlin::language()),
-        Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
-        Language::Bash => parser.set_language(&tree_sitter_bash::LANGUAGE.into()),
-        Language::Json => parser.set_language(&tree_sitter_json::LANGUAGE.into()),
-        Language::Dockerfile => parser.set_language(&tree_sitter_dockerfile::language().into()),
-        Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
-        Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
-    }
-    .expect(&format!("Error loading {} grammar", language));
+    set_parser_language(&language, &mut parser, language_enum);
     let parsed = parser.parse(code, None);
     let tree = parsed.unwrap();
     let root_node = tree.root_node();
