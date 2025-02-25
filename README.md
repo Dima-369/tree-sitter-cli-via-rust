@@ -1,3 +1,18 @@
+# CLI `--help` output
+
+```
+Outputs capture names with byte range using Tree-sitter for Kotlin Emacs.
+
+Usage: tree-sitter-cli-via-rust --code <code> --language <language> --highlights <highlights>
+
+Options:
+      --code <code>              The code to parse
+      --language <language>      [possible values: kotlin, php, bash, json, dockerfile, python, java]
+      --highlights <highlights>  String of highlights like the content of queries/highlights.scm
+  -h, --help                     Print help
+  -V, --version                  Print version
+```
+
 # Output
 
 The format is one per line: `{captureName} {byteRangeStart} {byteRangeEnd}`.
