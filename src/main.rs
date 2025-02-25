@@ -42,7 +42,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
         Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
     }
-        .expect(&format!("Error loading {} grammar", language));
+    .expect(&format!("Error loading {} grammar", language));
 }
 
 fn get_command() -> Command {
