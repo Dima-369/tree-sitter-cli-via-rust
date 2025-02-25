@@ -1,0 +1,25 @@
+# Output
+
+The format is one per line: `{captureName} {byteRangeStart} {byteRangeEnd}`.
+
+```
+keyword 3 7
+keyword 8 13
+type 14 19
+constructor 19 55
+punctuation.bracket 19 20
+keyword 25 28
+property 29 30
+variable 29 30
+punctuation.delimiter 30 31
+type 32 35
+type.builtin 32 35
+punctuation.delimiter 35 36
+keyword 41 44
+property 45 46
+variable 45 46
+punctuation.delimiter 46 47
+type 48 51
+type.builtin 48 51
+punctuation.bracket 54 55
+```
