@@ -78,14 +78,12 @@ fn main() {
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
-    let parsed = parser.parse(code, None);
-    let tree = parsed.unwrap();
-    let root_node = tree.root_node();
+    let tree = parser.parse(code, None).unwrap();
     let parser_language = parser.language().unwrap();
     let query = Query::new(&parser_language, highlights)
         .expect("Failed to create query for passed highlights");
     let mut query_cursor = tree_sitter::QueryCursor::new();
-    let mut matches = query_cursor.matches(&query, root_node, code.as_bytes());
+    let mut matches = query_cursor.matches(&query, tree.root_node(), code.as_bytes());
     while let Some(m) = matches.next() {
         for capture in m.captures {
             let node = capture.node;
