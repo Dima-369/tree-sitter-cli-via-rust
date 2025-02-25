@@ -5,16 +5,12 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.31", features = ["derive"] }
-# do not use latest version, since tree-sitter-kotlin forces an old version
 tree-sitter = "0.25.2"
-#tree-sitter-kotlin = "0.3.8"
-tree-sitter-kotlin-ng = "1.1.0"
-tree-sitter-language = "0.1.5"
+tree-sitter-bash = "0.23.3"
+tree-sitter-dockerfile = "0.2.0"
+tree-sitter-java = "0.23.5"
+tree-sitter-json = "0.24.8"
+# use main since the current version released on cargo requires an older version of tree-sitter
+tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin.git", branch = "main" }
 tree-sitter-php = "0.23.11"
-
-#            MarkdownLanguageMapping(listOf("json", "json"), Language.JSON),
-#            MarkdownLanguageMapping(listOf("bash", "shell", "sh"), Language.BASH),
-#            MarkdownLanguageMapping(listOf("dockerfile", "docker"), Language.DOCKERFILE),
-#            MarkdownLanguageMapping(listOf("python", "py"), Language.PYTHON),
-#            MarkdownLanguageMapping(listOf("java"), Language.JAVA),
-
+tree-sitter-python = "0.23.6"
