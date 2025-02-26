@@ -1,7 +1,8 @@
-use clap::{Arg, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use std::io;
 use std::io::Write;
-use tree_sitter::{Parser, Query, StreamingIterator};
+use std::process::exit;
+use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
 static LANGUAGES: [&str; 8] = [
     "kotlin",
@@ -73,6 +74,37 @@ fn get_command() -> Command {
                 .help("String of highlights like the content of queries/highlights.scm")
                 .required(true),
         )
+        .arg(
+            Arg::new("graphviz-only")
+                .long("graphviz-only")
+                .action(ArgAction::SetTrue)
+                .help("If passed, output only the graphviz dot graph"),
+        )
+}
+
+fn generate_dot_graph(tree: &Tree, code: &String) -> String {
+    let mut graph_string = "".to_string();
+    let root_node = tree.root_node();
+    process_node(root_node, &mut graph_string, code);
+    format!("digraph name {{\n{}}}", graph_string)
+}
+
+fn process_node(node: Node, graph_string: &mut String, code: &String) {
+    let node_id = format!("node_{}", node.id());
+    graph_string.push_str(&format!(
+        "{}[label=\"{} {} {} {}\"];\n",
+        node_id,
+        node.kind(),
+        node.byte_range().start,
+        node.byte_range().end,
+        node.utf8_text(code.as_ref())
+            .expect("Converting to UTF8 with the node range should succeed")
+    ));
+    for child in node.children(&mut node.walk()) {
+        let child_id = format!("node_{}", child.id());
+        graph_string.push_str(&format!("{} -> {}[label=\"\"];\n", node_id, child_id));
+        process_node(child, graph_string, code);
+    }
 }
 
 fn handle_args<W>(args: ArgMatches, mut writer: W)
@@ -82,21 +114,45 @@ where
     let code = args.get_one::<String>("code").unwrap();
     let language = args.get_one::<String>("language").unwrap();
     let highlights = args.get_one::<String>("highlights").unwrap();
+    let graphviz_only = args.get_one::<bool>("graphviz-only").unwrap();
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
     let tree = parser.parse(code, None).unwrap();
+    if *graphviz_only {
+        write!(writer, "{}", generate_dot_graph(&tree, code))
+            .expect("writing dot graph should succeed");
+    } else {
+        process_query(parser, highlights, &tree, &code, &mut writer);
+    }
+}
+
+fn process_query<W>(
+    parser: Parser,
+    highlights: &str,
+    tree: &Tree,
+    code: &String,
+    writer: &mut W,
+) where
+    W: Write,
+{
     let parser_language = parser.language().unwrap();
-    let query = Query::new(&parser_language, highlights)
-        .expect("Failed to create query for passed highlights");
+    let query = match Query::new(&parser_language, highlights) {
+        Ok(query) => query,
+        Err(_) => {
+            eprintln!("Failed to create query for passed highlights");
+            exit(1);
+        }
+    };
     let mut query_cursor = tree_sitter::QueryCursor::new();
     let mut matches = query_cursor.matches(&query, tree.root_node(), code.as_bytes());
     while let Some(m) = matches.next() {
         for capture in m.captures {
             let node = capture.node;
+            println!("{:?}", node.to_sexp());
             let capture_name = query.capture_names()[capture.index as usize];
             write!(
-                &mut writer,
+                writer,
                 "{} {} {}\n",
                 capture_name,
                 node.byte_range().start,
@@ -135,6 +191,24 @@ mod tests {
         handle_args(args, &mut output);
         let output = String::from_utf8(output).expect("Output array should be UTF-8");
         assert_eq!(expected_output, output);
+    }
+
+    #[test]
+    fn test_dot_graph() {
+        let mut output = Vec::new();
+        let args = get_command().get_matches_from(vec![
+            "main",
+            "--graphviz-only",
+            "--code",
+            "test = 1",
+            "--language",
+            "python",
+            "--highlights",
+            tree_sitter_python::HIGHLIGHTS_QUERY,
+        ]);
+        handle_args(args, &mut output);
+        let output = String::from_utf8(output).expect("Output array should be UTF-8");
+        assert_eq!("oeu", output);
     }
 
     #[test]
@@ -230,7 +304,7 @@ variable 8 12
     #[test]
     fn test_rust() {
         run_test_with_highlights(
-            "static TEST: i32 = 1",
+            "static TEST: i32 = 1;",
             "rust",
             tree_sitter_rust::HIGHLIGHTS_QUERY,
             r#"keyword 0 6
@@ -238,7 +312,7 @@ constructor 7 11
 punctuation.delimiter 11 12
 type.builtin 13 16
 constant.builtin 19 20
-punctuation.delimiter 20 20
+punctuation.delimiter 20 21
 "#,
         )
     }
