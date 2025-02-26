@@ -1,4 +1,4 @@
-use clap::{Arg, ArgAction, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches};
 use std::io;
 use std::io::Write;
 use std::process::exit;
@@ -51,8 +51,8 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
     .expect(&format!("Error loading {} grammar", language));
 }
 
-fn get_command() -> Command {
-    Command::new("Tree-sitter Syntax Highlighter")
+fn get_command() -> clap::Command {
+    clap::Command::new("Tree-sitter Syntax Highlighter")
         .version("1.0")
         .author("Dmytro Butemann <dbutemann@gmail.com>")
         .about("Outputs capture names with byte ranges or graphviz code using Tree-sitter for Kotlin Emacs.")
@@ -123,7 +123,7 @@ where
     let language = args.get_one::<String>("language").unwrap();
     let graphviz_only = args.get_one::<bool>("graphviz-only").unwrap();
     let highlights = args.get_one::<String>("highlights");
-    if !graphviz_only && highlights.is_none(){
+    if !graphviz_only && highlights.is_none() {
         eprintln!("--highlights is required when not using --graphviz-only");
         exit(1);
     }
@@ -135,7 +135,6 @@ where
         write!(writer, "{}", generate_dot_graph(&tree, code))
             .expect("writing dot graph should succeed");
     } else {
-
         process_query(parser, highlights.unwrap(), &tree, &code, &mut writer);
     }
 }
@@ -177,6 +176,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
     use super::*;
 
     fn run_test_with_highlights<S: AsRef<str>>(
@@ -203,7 +203,7 @@ mod tests {
     /// Note that the resulting graphviz code is printed to stdout and needs to be externally validated, like
     /// with https://dreampuf.github.io/GraphvizOnline/?engine=dot#digraph
     #[test]
-    fn test_dot_graph() {
+    fn test_dot_graph_simple() {
         let mut output = Vec::new();
         let args = get_command().get_matches_from(vec![
             "main",
@@ -212,7 +212,7 @@ mod tests {
             // test with quotes for correct escaping
             "test = \"1\"",
             "--language",
-            "python"
+            "python",
         ]);
         handle_args(args, &mut output);
         let output = String::from_utf8(output).expect("Output array should be UTF-8");
@@ -221,6 +221,52 @@ mod tests {
         assert!(output.starts_with("digraph name {\n"));
         assert!(output.ends_with("\n}"));
         assert_eq!(output.lines().count(), 28);
+    }
+
+    /// Validate if the generated graph can be converted to PNG via the dot process which should be on the PATH.
+    #[test]
+    fn test_dot_graph_creation_via_dot_process() {
+        let mut output = Vec::new();
+        let args = get_command().get_matches_from(vec![
+            "main",
+            "--graphviz-only",
+            "--code",
+            // test with brackets and quotes for correct escaping
+            "{\"test\": 1}",
+            "--language",
+            "json",
+        ]);
+        handle_args(args, &mut output);
+        let graphviz_code = String::from_utf8(output).expect("Output array should be UTF-8");
+        let mut dot_process = std::process::Command::new("dot")
+            .arg("-Tpng")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect("dot application should be available on the PATH");
+        if let Some(ref mut stdin) = dot_process.stdin {
+            stdin
+                .write_all(graphviz_code.as_bytes())
+                .expect("Failed to write to stdin");
+        }
+        let result = dot_process.wait().expect("Process should exit, but did not?");
+        if !result.success() {
+            let mut stdout = String::new();
+            let mut stderr = String::new();
+            if let Some(ref mut stdout_pipe) = dot_process.stdout {
+                stdout_pipe
+                    .read_to_string(&mut stdout)
+                    .expect("Failed to read stdout");
+            }
+            if let Some(ref mut stderr_pipe) = dot_process.stderr {
+                stderr_pipe
+                    .read_to_string(&mut stderr)
+                    .expect("Failed to read stderr");
+            }
+            eprintln!("{}", graphviz_code);
+            panic!("dot failed with exit code {}: {} {}", result.code().unwrap(), stdout, stderr);
+        }
     }
 
     #[test]
