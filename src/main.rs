@@ -114,7 +114,7 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
         };
         // try to escape arbitrary input
         // https://forum.graphviz.org/t/how-do-i-properly-escape-arbitrary-text-for-use-in-labels/1762/9
-        let escaped_node_content = escape_string(&*truncated_node_content);
+        let escaped_node_content = escape_string(&truncated_node_content);
         graph_string.push_str(&format!(
             "{}[label=\"{} {} {}\n{}\"];\n",
             node_id,
