@@ -45,3 +45,40 @@ type 48 51
 type.builtin 48 51
 punctuation.bracket 54 55
 ```
+
+## `--graphviz-only`
+
+Each node has the label: `{captureName} {byteStart} {byteEnd}\n{truncated content}`
+
+Note that the IDs are randomly generated.
+
+```
+digraph name {
+node_105553166401536[label="module 0 10
+test = \"1\""];
+node_105553166401536 -> node_105553128654720[label=""];
+node_105553128654720[label="expression_statement 0 10
+test = \"1\""];
+node_105553128654720 -> node_105553128654624[label=""];
+node_105553128654624[label="assignment 0 10
+test = \"1\""];
+node_105553128654624 -> node_105553128654144[label=""];
+node_105553128654144[label="identifier 0 4
+test"];
+node_105553128654624 -> node_105553121312888[label=""];
+node_105553121312888[label="= 5 6
+="];
+node_105553128654624 -> node_105553128654336[label=""];
+node_105553128654336[label="string 7 10
+\"1\""];
+node_105553128654336 -> node_105553121312768[label=""];
+node_105553121312768[label="string_start 7 8
+\""];
+node_105553128654336 -> node_105553121312776[label=""];
+node_105553121312776[label="string_content 8 9
+1"];
+node_105553128654336 -> node_105553121312784[label=""];
+node_105553121312784[label="string_end 9 10
+\""];
+}
+```

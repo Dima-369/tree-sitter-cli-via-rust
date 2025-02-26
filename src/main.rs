@@ -72,7 +72,6 @@ fn get_command() -> Command {
             Arg::new("highlights")
                 .long("highlights")
                 .help("String of highlights like the content of queries/highlights.scm")
-                .required(true),
         )
         .arg(
             Arg::new("graphviz-only")
@@ -121,7 +120,6 @@ where
 {
     let code = args.get_one::<String>("code").unwrap();
     let language = args.get_one::<String>("language").unwrap();
-    let highlights = args.get_one::<String>("highlights").unwrap();
     let graphviz_only = args.get_one::<bool>("graphviz-only").unwrap();
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
@@ -131,6 +129,8 @@ where
         write!(writer, "{}", generate_dot_graph(&tree, code))
             .expect("writing dot graph should succeed");
     } else {
+        // TODO make highlights not required and only use it for query
+        let highlights = args.get_one::<String>("highlights").unwrap();
         process_query(parser, highlights, &tree, &code, &mut writer);
     }
 }
@@ -152,7 +152,6 @@ where
     while let Some(m) = matches.next() {
         for capture in m.captures {
             let node = capture.node;
-            println!("{:?}", node.to_sexp());
             let capture_name = query.capture_names()[capture.index as usize];
             write!(
                 writer,
