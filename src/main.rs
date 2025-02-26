@@ -55,7 +55,7 @@ fn get_command() -> Command {
     Command::new("Tree-sitter Syntax Highlighter")
         .version("1.0")
         .author("Dmytro Butemann <dbutemann@gmail.com>")
-        .about("Outputs capture names with byte range using Tree-sitter for Kotlin Emacs.")
+        .about("Outputs capture names with byte ranges or graphviz code using Tree-sitter for Kotlin Emacs.")
         .arg(
             Arg::new("code")
                 .long("code")
@@ -71,7 +71,7 @@ fn get_command() -> Command {
         .arg(
             Arg::new("highlights")
                 .long("highlights")
-                .help("String of highlights like the content of queries/highlights.scm")
+                .help("String of highlights like the content of queries/highlights.scm. This is required when not using --graphviz-only")
         )
         .arg(
             Arg::new("graphviz-only")
@@ -87,8 +87,9 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
         let node_content = node
             .utf8_text(code.as_ref())
             .expect("Converting to UTF8 with the node range should succeed");
-        let truncated_node_content = if node_content.len() > 60 {
-            format!("{}...", &node_content[..60])
+        let max_node_content_length = 60;
+        let truncated_node_content = if node_content.len() > max_node_content_length {
+            format!("{}...", &node_content[..max_node_content_length])
         } else {
             node_content.to_string()
         };
@@ -121,6 +122,11 @@ where
     let code = args.get_one::<String>("code").unwrap();
     let language = args.get_one::<String>("language").unwrap();
     let graphviz_only = args.get_one::<bool>("graphviz-only").unwrap();
+    let highlights = args.get_one::<String>("highlights");
+    if !graphviz_only && highlights.is_none(){
+        eprintln!("--highlights is required when not using --graphviz-only");
+        exit(1);
+    }
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
@@ -129,9 +135,8 @@ where
         write!(writer, "{}", generate_dot_graph(&tree, code))
             .expect("writing dot graph should succeed");
     } else {
-        // TODO make highlights not required and only use it for query
-        let highlights = args.get_one::<String>("highlights").unwrap();
-        process_query(parser, highlights, &tree, &code, &mut writer);
+
+        process_query(parser, highlights.unwrap(), &tree, &code, &mut writer);
     }
 }
 
@@ -207,9 +212,7 @@ mod tests {
             // test with quotes for correct escaping
             "test = \"1\"",
             "--language",
-            "python",
-            "--highlights",
-            tree_sitter_python::HIGHLIGHTS_QUERY,
+            "python"
         ]);
         handle_args(args, &mut output);
         let output = String::from_utf8(output).expect("Output array should be UTF-8");
