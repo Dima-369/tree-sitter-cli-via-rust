@@ -1,6 +1,5 @@
 use clap::{Arg, ArgAction, ArgMatches};
 use std::io;
-use std::io::Read;
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
@@ -177,6 +176,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
     use super::*;
 
     fn run_test_with_highlights<S: AsRef<str>>(
