@@ -90,6 +90,17 @@ fn get_command() -> clap::Command {
 }
 
 fn generate_dot_graph(tree: &Tree, code: &String) -> String {
+
+    fn escape_string(string: &str) -> String {
+        string.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+            .replace("\x08", "\\b")
+            .replace("\x0c", "\\f")
+    }
+
     fn process_node(node: Node, graph_string: &mut String, code: &String) {
         let node_id = format!("node_{}", node.id());
         let node_content = node
@@ -101,7 +112,9 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
         } else {
             node_content.to_string()
         };
-        let escaped_node_content = truncated_node_content.replace("\"", "\\\"");
+        // try to escape arbitrary input
+        // https://forum.graphviz.org/t/how-do-i-properly-escape-arbitrary-text-for-use-in-labels/1762/9
+        let escaped_node_content = escape_string(&*truncated_node_content);
         graph_string.push_str(&format!(
             "{}[label=\"{} {} {}\n{}\"];\n",
             node_id,
@@ -233,7 +246,7 @@ mod tests {
         assert_eq!(output.lines().count(), 28);
     }
 
-    /// Validate if the generated graph can be converted to PNG via the dot process which should be on the PATH.
+    /// Validate if the generated graph code has valid syntax via the dot process which should be on the PATH.
     #[test]
     fn test_dot_graph_creation_via_dot_process() {
         let mut output = Vec::new();
@@ -241,15 +254,18 @@ mod tests {
             "main",
             "--graphviz-only",
             "--code",
-            // test with brackets and quotes for correct escaping
-            "{\"test\": 1}",
+            // test with brackets and escaped quotes for correct escaping
+            r#"fn main() {
+                let test = "\"1\""; // comment
+            }"#,
             "--language",
-            "json",
+            "rust",
         ]);
         handle_args(args, &mut output);
         let graphviz_code = String::from_utf8(output).expect("Output array should be UTF-8");
         let mut dot_process = std::process::Command::new("dot")
-            .arg("-Tpng")
+            // If this is used to convert to PNG, the process will never terminate. Maybe it keeps waiting on stdin?
+            // Or some other issue with the argument escaping?
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
