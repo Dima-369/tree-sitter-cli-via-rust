@@ -1,5 +1,6 @@
 use clap::{Arg, ArgAction, ArgMatches};
 use std::io;
+use std::io::Read;
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
@@ -97,7 +98,7 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
         graph_string.push_str(&format!(
             "{}[label=\"{} {} {}\n{}\"];\n",
             node_id,
-            node.kind(),
+            node.kind().replace("\"", "\\\""),
             node.byte_range().start,
             node.byte_range().end,
             escaped_node_content
@@ -176,7 +177,6 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Read;
     use super::*;
 
     fn run_test_with_highlights<S: AsRef<str>>(
@@ -248,24 +248,31 @@ mod tests {
         if let Some(ref mut stdin) = dot_process.stdin {
             stdin
                 .write_all(graphviz_code.as_bytes())
-                .expect("Failed to write to stdin");
+                .expect("stdin should be writable");
         }
-        let result = dot_process.wait().expect("Process should exit, but did not?");
+        let result = dot_process
+            .wait()
+            .expect("Process should exit, but did not?");
         if !result.success() {
             let mut stdout = String::new();
             let mut stderr = String::new();
             if let Some(ref mut stdout_pipe) = dot_process.stdout {
                 stdout_pipe
                     .read_to_string(&mut stdout)
-                    .expect("Failed to read stdout");
+                    .expect("stdout should be readable");
             }
             if let Some(ref mut stderr_pipe) = dot_process.stderr {
                 stderr_pipe
                     .read_to_string(&mut stderr)
-                    .expect("Failed to read stderr");
+                    .expect("stderr should be readable");
             }
             eprintln!("{}", graphviz_code);
-            panic!("dot failed with exit code {}: {} {}", result.code().unwrap(), stdout, stderr);
+            panic!(
+                "dot failed creating PNG from the generated graphviz code with exit code {}: {} {}",
+                result.code().unwrap(),
+                stdout,
+                stderr
+            );
         }
     }
 
