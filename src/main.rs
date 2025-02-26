@@ -43,12 +43,12 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
         Language::Bash => parser.set_language(&tree_sitter_bash::LANGUAGE.into()),
         Language::Json => parser.set_language(&tree_sitter_json::LANGUAGE.into()),
-        Language::Dockerfile => parser.set_language(&tree_sitter_dockerfile::language().into()),
+        Language::Dockerfile => parser.set_language(&tree_sitter_dockerfile::language()),
         Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
         Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
         Language::Rust => parser.set_language(&tree_sitter_rust::LANGUAGE.into()),
     }
-    .expect(&format!("Error loading {} grammar", language));
+    .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
 
 fn get_command() -> clap::Command {
@@ -135,7 +135,7 @@ where
         write!(writer, "{}", generate_dot_graph(&tree, code))
             .expect("writing dot graph should succeed");
     } else {
-        process_query(parser, highlights.unwrap(), &tree, &code, &mut writer);
+        process_query(parser, highlights.unwrap(), &tree, code, &mut writer);
     }
 }
 
@@ -157,9 +157,9 @@ where
         for capture in m.captures {
             let node = capture.node;
             let capture_name = query.capture_names()[capture.index as usize];
-            write!(
+            writeln!(
                 writer,
-                "{} {} {}\n",
+                "{} {} {}",
                 capture_name,
                 node.byte_range().start,
                 node.byte_range().end
@@ -176,8 +176,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Read;
     use super::*;
+    use std::io::Read;
 
     fn run_test_with_highlights<S: AsRef<str>>(
         code: S,
