@@ -4,7 +4,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 8] = [
+static LANGUAGES: [&str; 9] = [
     "kotlin",
     "php",
     "bash",
@@ -13,6 +13,7 @@ static LANGUAGES: [&str; 8] = [
     "python",
     "java",
     "rust",
+    "lua",
 ];
 enum Language {
     Kotlin,
@@ -23,6 +24,7 @@ enum Language {
     Python,
     Java,
     Rust,
+    Lua,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -34,6 +36,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "python" => Language::Python,
         "java" => Language::Java,
         "rust" => Language::Rust,
+        "lua" => Language::Lua,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -47,6 +50,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Python => parser.set_language(&tree_sitter_python::LANGUAGE.into()),
         Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
         Language::Rust => parser.set_language(&tree_sitter_rust::LANGUAGE.into()),
+        Language::Lua => parser.set_language(&tree_sitter_lua::LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
@@ -383,4 +387,18 @@ punctuation.delimiter 20 21
 "#,
         )
     }
+
+    #[test]
+    fn test_lua() {
+        run_test_with_highlights(
+            "test = 1",
+            "lua",
+            tree_sitter_lua::HIGHLIGHTS_QUERY,
+            r#"variable 0 4
+operator 5 6
+number 7 8
+"#,
+        )
+    }
+
 }

@@ -12,6 +12,7 @@ tree-sitter-json = "0.24.8"
 tree-sitter-rust = "0.23.2"
 tree-sitter-php = "0.23.11"
 tree-sitter-python = "0.23.6"
+tree-sitter-lua = "0.2.0"
 # use main since the current version released on cargo requires an older version of tree-sitter
 tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin.git", branch = "main" }
 tree-sitter-dockerfile = { git = "https://github.com/Dima-369/tree-sitter-dockerfile", branch = "main" }
