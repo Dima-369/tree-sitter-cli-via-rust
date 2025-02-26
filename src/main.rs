@@ -83,23 +83,24 @@ fn get_command() -> Command {
 }
 
 fn generate_dot_graph(tree: &Tree, code: &String) -> String {
-
     fn process_node(node: Node, graph_string: &mut String, code: &String) {
         let node_id = format!("node_{}", node.id());
-        let node_content = node.utf8_text(code.as_ref())
+        let node_content = node
+            .utf8_text(code.as_ref())
             .expect("Converting to UTF8 with the node range should succeed");
         let truncated_node_content = if node_content.len() > 60 {
             format!("{}...", &node_content[..60])
         } else {
             node_content.to_string()
         };
+        let escaped_node_content = truncated_node_content.replace("\"", "\\\"");
         graph_string.push_str(&format!(
             "{}[label=\"{} {} {}\n{}\"];\n",
             node_id,
             node.kind(),
             node.byte_range().start,
             node.byte_range().end,
-            truncated_node_content
+            escaped_node_content
         ));
         for child in node.children(&mut node.walk()) {
             let child_id = format!("node_{}", child.id());
@@ -134,13 +135,8 @@ where
     }
 }
 
-fn process_query<W>(
-    parser: Parser,
-    highlights: &str,
-    tree: &Tree,
-    code: &String,
-    writer: &mut W,
-) where
+fn process_query<W>(parser: Parser, highlights: &str, tree: &Tree, code: &String, writer: &mut W)
+where
     W: Write,
 {
     let parser_language = parser.language().unwrap();
@@ -200,6 +196,8 @@ mod tests {
         assert_eq!(expected_output, output);
     }
 
+    /// Note that the resulting graphviz code is printed to stdout and needs to be externally validated, like
+    /// with https://dreampuf.github.io/GraphvizOnline/?engine=dot#digraph
     #[test]
     fn test_dot_graph() {
         let mut output = Vec::new();
@@ -207,7 +205,8 @@ mod tests {
             "main",
             "--graphviz-only",
             "--code",
-            "test = 1",
+            // test with quotes for correct escaping
+            "test = \"1\"",
             "--language",
             "python",
             "--highlights",
@@ -215,11 +214,11 @@ mod tests {
         ]);
         handle_args(args, &mut output);
         let output = String::from_utf8(output).expect("Output array should be UTF-8");
+        println!("{}", output);
         // not testing node IDs since they are random on every invocation
         assert!(output.starts_with("digraph name {\n"));
-        println!("{}", output);
         assert!(output.ends_with("\n}"));
-        assert_eq!(output.lines().count(), 19);
+        assert_eq!(output.lines().count(), 28);
     }
 
     #[test]
