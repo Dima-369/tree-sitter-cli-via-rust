@@ -202,6 +202,8 @@ mod tests {
 
     /// Note that the resulting graphviz code is printed to stdout and needs to be externally validated, like
     /// with https://dreampuf.github.io/GraphvizOnline/?engine=dot#digraph
+    ///
+    /// See test_dot_graph_creation_via_dot_process() which validates it automatically.
     #[test]
     fn test_dot_graph_simple() {
         let mut output = Vec::new();
