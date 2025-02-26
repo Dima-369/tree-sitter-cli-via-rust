@@ -97,8 +97,8 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
             .replace("\n", "\\n")
             .replace("\r", "\\r")
             .replace("\t", "\\t")
-            .replace("\x08", "\\b")
-            .replace("\x0c", "\\f")
+            .replace("\x08", "\\b") // backspace
+            .replace("\x0c", "\\f") // form feed
     }
 
     fn process_node(node: Node, graph_string: &mut String, code: &String) {
