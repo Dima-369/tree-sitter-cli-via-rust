@@ -25,3 +25,6 @@
 [submodule "tree-sitter-grammars/tree-sitter-lua"]
 	path = tree-sitter-grammars/tree-sitter-lua
 	url = git@github.com:tree-sitter-grammars/tree-sitter-lua.git
+[submodule "tree-sitter-grammars/tree-sitter-toml"]
+	path = tree-sitter-grammars/tree-sitter-toml
+	url = git@github.com:Dima-369/tree-sitter-toml.git

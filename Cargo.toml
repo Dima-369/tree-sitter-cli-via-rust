@@ -16,3 +16,4 @@ tree-sitter-lua = "0.2.0"
 # use main since the current version released on cargo requires an older version of tree-sitter
 tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin.git", branch = "main" }
 tree-sitter-dockerfile = { git = "https://github.com/Dima-369/tree-sitter-dockerfile", branch = "main" }
+tree-sitter-toml = { git = "https://github.com/Dima-369/tree-sitter-toml", branch = "master" }

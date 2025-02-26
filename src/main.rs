@@ -4,7 +4,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 9] = [
+static LANGUAGES: [&str; 10] = [
     "kotlin",
     "php",
     "bash",
@@ -14,6 +14,7 @@ static LANGUAGES: [&str; 9] = [
     "java",
     "rust",
     "lua",
+    "toml",
 ];
 enum Language {
     Kotlin,
@@ -25,6 +26,7 @@ enum Language {
     Java,
     Rust,
     Lua,
+    Toml,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -37,6 +39,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "java" => Language::Java,
         "rust" => Language::Rust,
         "lua" => Language::Lua,
+        "toml" => Language::Toml,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -51,6 +54,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Java => parser.set_language(&tree_sitter_java::LANGUAGE.into()),
         Language::Rust => parser.set_language(&tree_sitter_rust::LANGUAGE.into()),
         Language::Lua => parser.set_language(&tree_sitter_lua::LANGUAGE.into()),
+        Language::Toml => parser.set_language(&tree_sitter_toml::LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
@@ -397,6 +401,19 @@ punctuation.delimiter 20 21
             r#"variable 0 4
 operator 5 6
 number 7 8
+"#,
+        )
+    }
+
+    #[test]
+    fn test_toml() {
+        run_test_with_highlights(
+            "[package]",
+            "toml",
+            tree_sitter_toml::HIGHLIGHT_QUERY,
+            r#"punctuation.bracket 0 1
+property 1 8
+punctuation.bracket 8 9
 "#,
         )
     }
