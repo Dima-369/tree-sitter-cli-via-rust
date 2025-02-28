@@ -439,13 +439,17 @@ punctuation.bracket 8 9
     #[test]
     fn test_emojis() {
         run_test_with_highlights(
-            "val test = \"😄\"",
+            "val test = \"😄\"\nval test = \"😄\"",
             "kotlin",
             tree_sitter_kotlin::HIGHLIGHTS_QUERY,
             r#"keyword 0 3
 variable 4 8
 operator 9 10
 string 11 17
+keyword 18 21
+variable 22 26
+operator 27 28
+string 29 35
 "#,
         )
     }
