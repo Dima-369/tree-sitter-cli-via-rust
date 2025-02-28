@@ -305,10 +305,10 @@ mod tests {
     #[test]
     fn test_kotlin() {
         run_test_with_highlights(
-            "let test = 1",
+            "val test = 1",
             "kotlin",
             tree_sitter_kotlin::HIGHLIGHTS_QUERY,
-            r#"variable 0 3
+            r#"keyword 0 3
 variable 4 8
 operator 9 10
 number 11 12
@@ -430,6 +430,22 @@ number 7 8
             r#"punctuation.bracket 0 1
 property 1 8
 punctuation.bracket 8 9
+"#,
+        )
+    }
+
+    /// It returns "string 11 17", because the 😄 emoji is 4 bytes, the " character are in the string twice,
+    /// so 17 - 11 = 6 bytes for the string in total. This is important for compatibility with Kotlin Emacs.
+    #[test]
+    fn test_emojis() {
+        run_test_with_highlights(
+            "val test = \"😄\"",
+            "kotlin",
+            tree_sitter_kotlin::HIGHLIGHTS_QUERY,
+            r#"keyword 0 3
+variable 4 8
+operator 9 10
+string 11 17
 "#,
         )
     }
