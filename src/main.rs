@@ -463,7 +463,7 @@ string 29 35
     fn test_string_byte_count() {
 
         fn get_len(s: &str) -> usize {
-            s.as_bytes().len()
+            s.len()
         }
 
         assert_eq!(get_len("val test =\"😄😄😄\""), 24);
