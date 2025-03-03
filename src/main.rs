@@ -474,13 +474,14 @@ string 29 35
     #[test]
     fn test_groovy() {
         run_test_with_highlights(
-            "[package]",
+            "apply plugin: 'java'",
             "groovy",
             tree_sitter_groovy::HIGHLIGHTS_QUERY,
-            // TODO fill tree_sitter_groovy::HIGHLIGHTS_QUERY
-            r#""#,
+            r#"variable 0 5
+variable 6 12
+string 14 20
+"#,
         )
     }
-
 
 }
