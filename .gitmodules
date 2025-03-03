@@ -28,3 +28,6 @@
 [submodule "tree-sitter-grammars/tree-sitter-toml"]
 	path = tree-sitter-grammars/tree-sitter-toml
 	url = git@github.com:Dima-369/tree-sitter-toml.git
+[submodule "tree-sitter-grammars/tree-sitter-groovy"]
+	path = tree-sitter-grammars/tree-sitter-groovy
+	url = git@github.com:Dima-369/tree-sitter-groovy.git

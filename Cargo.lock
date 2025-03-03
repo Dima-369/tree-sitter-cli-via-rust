@@ -315,6 +315,7 @@ dependencies = [
  "tree-sitter",
  "tree-sitter-bash",
  "tree-sitter-dockerfile",
+ "tree-sitter-groovy",
  "tree-sitter-java",
  "tree-sitter-json",
  "tree-sitter-kotlin",
@@ -332,6 +333,15 @@ source = "git+https://github.com/Dima-369/tree-sitter-dockerfile?branch=main#f6e
 dependencies = [
  "cc",
  "tree-sitter",
+]
+
+[[package]]
+name = "tree-sitter-groovy"
+version = "0.1.2"
+source = "git+https://github.com/Dima-369/tree-sitter-groovy?branch=master#2bfd81331e2bf84b7b16c91db110078080c97dd5"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
 ]
 
 [[package]]

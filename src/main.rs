@@ -4,7 +4,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 10] = [
+static LANGUAGES: [&str; 11] = [
     "kotlin",
     "php",
     "bash",
@@ -15,6 +15,7 @@ static LANGUAGES: [&str; 10] = [
     "rust",
     "lua",
     "toml",
+    "groovy",
 ];
 enum Language {
     Kotlin,
@@ -27,6 +28,7 @@ enum Language {
     Rust,
     Lua,
     Toml,
+    Groovy,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -40,6 +42,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "rust" => Language::Rust,
         "lua" => Language::Lua,
         "toml" => Language::Toml,
+        "groovy" => Language::Groovy,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -55,6 +58,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Rust => parser.set_language(&tree_sitter_rust::LANGUAGE.into()),
         Language::Lua => parser.set_language(&tree_sitter_lua::LANGUAGE.into()),
         Language::Toml => parser.set_language(&tree_sitter_toml::LANGUAGE.into()),
+        Language::Groovy => parser.set_language(&tree_sitter_groovy::LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
@@ -453,5 +457,30 @@ string 29 35
 "#,
         )
     }
+
+    /// Parity checks to Kotlin with the result: It is the same in Kotlin.
+    #[test]
+    fn test_string_byte_count() {
+
+        fn get_len(s: &str) -> usize {
+            s.as_bytes().len()
+        }
+
+        assert_eq!(get_len("val test =\"😄😄😄\""), 24);
+        assert_eq!(get_len("val"), 3);
+        assert_eq!(get_len("😄"), 4);
+    }
+
+    #[test]
+    fn test_groovy() {
+        run_test_with_highlights(
+            "[package]",
+            "groovy",
+            tree_sitter_groovy::HIGHLIGHTS_QUERY,
+            // TODO fill tree_sitter_groovy::HIGHLIGHTS_QUERY
+            r#""#,
+        )
+    }
+
 
 }
