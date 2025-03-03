@@ -96,7 +96,8 @@ fn get_command() -> clap::Command {
 fn generate_dot_graph(tree: &Tree, code: &String) -> String {
 
     fn escape_string(string: &str) -> String {
-        string.replace("\\", "\\\\")
+        string
+            .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
             .replace("\r", "\\r")
@@ -461,14 +462,9 @@ string 29 35
     /// Parity checks to Kotlin with the result: It is the same in Kotlin.
     #[test]
     fn test_string_byte_count() {
-
-        fn get_len(s: &str) -> usize {
-            s.len()
-        }
-
-        assert_eq!(get_len("val test =\"😄😄😄\""), 24);
-        assert_eq!(get_len("val"), 3);
-        assert_eq!(get_len("😄"), 4);
+        assert_eq!("val test =\"😄😄😄\"".len(), 24);
+        assert_eq!("val".len(), 3);
+        assert_eq!("😄".len(), 4);
     }
 
     #[test]
