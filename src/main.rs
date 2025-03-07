@@ -4,7 +4,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 11] = [
+static LANGUAGES: [&str; 12] = [
     "kotlin",
     "php",
     "bash",
@@ -16,6 +16,7 @@ static LANGUAGES: [&str; 11] = [
     "lua",
     "toml",
     "groovy",
+    "css",
 ];
 enum Language {
     Kotlin,
@@ -29,6 +30,7 @@ enum Language {
     Lua,
     Toml,
     Groovy,
+    Css,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -43,6 +45,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "lua" => Language::Lua,
         "toml" => Language::Toml,
         "groovy" => Language::Groovy,
+        "css" => Language::Css,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -59,6 +62,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Lua => parser.set_language(&tree_sitter_lua::LANGUAGE.into()),
         Language::Toml => parser.set_language(&tree_sitter_toml::LANGUAGE.into()),
         Language::Groovy => parser.set_language(&tree_sitter_groovy::LANGUAGE.into()),
+        Language::Css => parser.set_language(&tree_sitter_css::LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
@@ -476,6 +480,19 @@ string 29 35
             r#"variable 0 5
 variable 6 12
 string 14 20
+"#,
+        )
+    }
+
+    #[test]
+    fn test_css() {
+        run_test_with_highlights(
+            ".test { color: red; }",
+            "css",
+            tree_sitter_css::HIGHLIGHTS_QUERY,
+            r#"property 1 5
+property 8 13
+punctuation.delimiter 13 14
 "#,
         )
     }
