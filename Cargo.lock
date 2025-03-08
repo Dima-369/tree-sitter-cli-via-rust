@@ -317,6 +317,7 @@ dependencies = [
  "tree-sitter-css",
  "tree-sitter-dockerfile",
  "tree-sitter-groovy",
+ "tree-sitter-html",
  "tree-sitter-java",
  "tree-sitter-json",
  "tree-sitter-kotlin",
@@ -350,6 +351,16 @@ dependencies = [
 name = "tree-sitter-groovy"
 version = "0.1.2"
 source = "git+https://github.com/Dima-369/tree-sitter-groovy?branch=master#cc8ab3a5a6ab04072506d0a666665e103b82615f"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-html"
+version = "0.23.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "261b708e5d92061ede329babaaa427b819329a9d427a1d710abb0f67bbef63ee"
 dependencies = [
  "cc",
  "tree-sitter-language",

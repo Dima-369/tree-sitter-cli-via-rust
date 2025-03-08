@@ -5,7 +5,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 12] = [
+static LANGUAGES: [&str; 13] = [
     "kotlin",
     "php",
     "bash",
@@ -18,6 +18,7 @@ static LANGUAGES: [&str; 12] = [
     "toml",
     "groovy",
     "css",
+    "html",
 ];
 enum Language {
     Kotlin,
@@ -32,6 +33,7 @@ enum Language {
     Toml,
     Groovy,
     Css,
+    Html,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -47,6 +49,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "toml" => Language::Toml,
         "groovy" => Language::Groovy,
         "css" => Language::Css,
+        "html" => Language::Html,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -64,6 +67,7 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Toml => parser.set_language(&tree_sitter_toml::LANGUAGE.into()),
         Language::Groovy => parser.set_language(&tree_sitter_groovy::LANGUAGE.into()),
         Language::Css => parser.set_language(&tree_sitter_css::LANGUAGE.into()),
+        Language::Html => parser.set_language(&tree_sitter_html::LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
 }
@@ -322,6 +326,61 @@ mod tests {
         }
     }
 
+    /// Verifies that:
+    /// 1. The graphviz output is deterministic (same input produces identical output)
+    /// 2. Node IDs in the generated graph are sequential starting from 1
+    #[test]
+    fn test_dot_graph_stable_ids() {
+        let code = r#"let x = 1;"#;
+        let mut output1 = Vec::new();
+        let mut output2 = Vec::new();
+        let args = get_command().get_matches_from(vec![
+            "main",
+            "--graphviz-only",
+            "--code",
+            code,
+            "--language",
+            "rust",
+        ]);
+        handle_args(args.clone(), &mut output1);
+        handle_args(args, &mut output2);
+        let output1 = String::from_utf8(output1).expect("Output array should be UTF-8");
+        let output2 = String::from_utf8(output2).expect("Output array should be UTF-8");
+        assert_eq!(output1, output2);
+
+        // Verify node IDs are sequential
+        let node_ids: Vec<_> = output1
+            .lines()
+            // filter out node connections which have ->
+            .filter(|line| line.starts_with("node_") && !line.contains("->"))
+            .map(|line| {
+                let id = line
+                    .split('[')
+                    .next()
+                    .unwrap()
+                    .trim()
+                    .strip_prefix("node_")
+                    .expect("Node ID should start with 'node_'")
+                    .parse::<usize>()
+                    .unwrap_or_else(|_| {
+                        eprintln!("Failed to parse node ID from string: {}", line);
+                        panic!("Node ID should be a valid number");
+                    });
+                id
+            })
+            .collect();
+
+        // Check that IDs start at 1 and are sequential
+        let mut expected_id = 1;
+        for &id in node_ids.iter() {
+            assert_eq!(
+                id, expected_id,
+                "Node IDs should be sequential starting from 1"
+            );
+            expected_id += 1;
+        }
+    }
+
     #[test]
     fn test_kotlin() {
         run_test_with_highlights(
@@ -508,56 +567,21 @@ punctuation.delimiter 13 14
         )
     }
 
-    /// Generate the same graph for the same code
     #[test]
-    fn test_dot_graph_stable_ids() {
-        let code = r#"let x = 1;"#;
-        let mut output1 = Vec::new();
-        let mut output2 = Vec::new();
-        let args = get_command().get_matches_from(vec![
-            "main",
-            "--graphviz-only",
-            "--code",
-            code,
-            "--language",
-            "rust",
-        ]);
-        handle_args(args.clone(), &mut output1);
-        handle_args(args, &mut output2);
-        let output1 = String::from_utf8(output1).expect("Output array should be UTF-8");
-        let output2 = String::from_utf8(output2).expect("Output array should be UTF-8");
-        assert_eq!(output1, output2);
-
-        // Verify node IDs are sequential
-        let node_ids: Vec<_> = output1
-            .lines()
-            // filter out node connections which have ->
-            .filter(|line| line.starts_with("node_") && !line.contains("->"))
-            .map(|line| {
-                let id = line
-                    .split('[')
-                    .next()
-                    .unwrap()
-                    .trim()
-                    .strip_prefix("node_")
-                    .expect("Node ID should start with 'node_'")
-                    .parse::<usize>()
-                    .unwrap_or_else(|_| {
-                        eprintln!("Failed to parse node ID from string: {}", line);
-                        panic!("Node ID should be a valid number");
-                    });
-                id
-            })
-            .collect();
-
-        // Check that IDs start at 1 and are sequential
-        let mut expected_id = 1;
-        for &id in node_ids.iter() {
-            assert_eq!(
-                id, expected_id,
-                "Node IDs should be sequential starting from 1"
-            );
-            expected_id += 1;
-        }
+    fn test_html() {
+        run_test_with_highlights(
+            "<!DOCTYPE html><p>hi</p>",
+            "html",
+            tree_sitter_html::HIGHLIGHTS_QUERY,
+            r#"constant 0 15
+punctuation.bracket 14 15
+punctuation.bracket 15 16
+tag 16 17
+punctuation.bracket 17 18
+punctuation.bracket 20 22
+tag 22 23
+punctuation.bracket 23 24
+"#,
+        )
     }
 }
