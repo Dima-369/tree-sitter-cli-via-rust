@@ -21,3 +21,4 @@ tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin.git", b
 tree-sitter-dockerfile = { git = "https://github.com/Dima-369/tree-sitter-dockerfile", branch = "main" }
 tree-sitter-toml = { git = "https://github.com/Dima-369/tree-sitter-toml", branch = "master" }
 tree-sitter-groovy = { git = "https://github.com/Dima-369/tree-sitter-groovy", branch = "master" }
+tree-sitter-javascript = "0.23.1"

@@ -5,7 +5,7 @@ use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Node, Parser, Query, StreamingIterator, Tree};
 
-static LANGUAGES: [&str; 13] = [
+static LANGUAGES: [&str; 14] = [
     "kotlin",
     "php",
     "bash",
@@ -19,6 +19,7 @@ static LANGUAGES: [&str; 13] = [
     "groovy",
     "css",
     "html",
+    "javascript",
 ];
 enum Language {
     Kotlin,
@@ -34,6 +35,7 @@ enum Language {
     Groovy,
     Css,
     Html,
+    Javascript,
 }
 fn map_language_to_enum(language: &str) -> Language {
     match language {
@@ -50,6 +52,7 @@ fn map_language_to_enum(language: &str) -> Language {
         "groovy" => Language::Groovy,
         "css" => Language::Css,
         "html" => Language::Html,
+        "javascript" => Language::Javascript,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -68,8 +71,9 @@ fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: L
         Language::Groovy => parser.set_language(&tree_sitter_groovy::LANGUAGE.into()),
         Language::Css => parser.set_language(&tree_sitter_css::LANGUAGE.into()),
         Language::Html => parser.set_language(&tree_sitter_html::LANGUAGE.into()),
+        Language::Javascript => parser.set_language(&tree_sitter_javascript::LANGUAGE.into()),
     }
-    .unwrap_or_else(|_| panic!("Error loading {} grammar", language));
+    .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
 
 fn get_command() -> clap::Command {
@@ -581,6 +585,21 @@ punctuation.bracket 17 18
 punctuation.bracket 20 22
 tag 22 23
 punctuation.bracket 23 24
+"#,
+        )
+    }
+
+    #[test]
+    fn test_javascript() {
+        run_test_with_highlights(
+            "const test = 1;",
+            "javascript",
+            tree_sitter_javascript::HIGHLIGHT_QUERY,
+            r#"keyword 0 5
+variable 6 10
+operator 11 12
+number 13 14
+punctuation.delimiter 14 15
 "#,
         )
     }
