@@ -1,4 +1,5 @@
 use clap::{Arg, ArgAction, ArgMatches};
+use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::process::exit;
@@ -98,7 +99,6 @@ fn get_command() -> clap::Command {
 }
 
 fn generate_dot_graph(tree: &Tree, code: &String) -> String {
-
     fn escape_string(string: &str) -> String {
         string
             .replace("\\", "\\\\")
@@ -110,8 +110,16 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
             .replace("\x0c", "\\f") // form feed
     }
 
-    fn process_node(node: Node, graph_string: &mut String, code: &String) {
-        let node_id = format!("node_{}", node.id());
+    fn process_node(
+        node: Node,
+        graph_string: &mut String,
+        code: &String,
+        id_map: &mut HashMap<usize, usize>,
+    ) {
+        let next_id = id_map.len() + 1;
+        let stable_id = *id_map.entry(node.id()).or_insert(next_id);
+        let node_id = format!("node_{}", stable_id);
+
         let node_content = node
             .utf8_text(code.as_ref())
             .expect("Converting to UTF8 with the node range should succeed");
@@ -121,8 +129,7 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
         } else {
             node_content.to_string()
         };
-        // try to escape arbitrary input
-        // https://forum.graphviz.org/t/how-do-i-properly-escape-arbitrary-text-for-use-in-labels/1762/9
+
         let escaped_node_content = escape_string(&truncated_node_content);
         graph_string.push_str(&format!(
             "{}[label=\"{} {} {}\n{}\"];\n",
@@ -132,16 +139,20 @@ fn generate_dot_graph(tree: &Tree, code: &String) -> String {
             node.byte_range().end,
             escaped_node_content
         ));
+
         for child in node.children(&mut node.walk()) {
-            let child_id = format!("node_{}", child.id());
+            let next_child_id = id_map.len() + 1;
+            let child_stable_id = *id_map.entry(child.id()).or_insert(next_child_id);
+            let child_id = format!("node_{}", child_stable_id);
             graph_string.push_str(&format!("{} -> {}[label=\"\"];\n", node_id, child_id));
-            process_node(child, graph_string, code);
+            process_node(child, graph_string, code, id_map);
         }
     }
 
-    let mut graph_string = "".to_string();
+    let mut graph_string = String::new();
+    let mut id_map = HashMap::new();
     let root_node = tree.root_node();
-    process_node(root_node, &mut graph_string, code);
+    process_node(root_node, &mut graph_string, code, &mut id_map);
     format!("digraph name {{\n{}}}", graph_string)
 }
 
@@ -497,4 +508,56 @@ punctuation.delimiter 13 14
         )
     }
 
+    /// Generate the same graph for the same code
+    #[test]
+    fn test_dot_graph_stable_ids() {
+        let code = r#"let x = 1;"#;
+        let mut output1 = Vec::new();
+        let mut output2 = Vec::new();
+        let args = get_command().get_matches_from(vec![
+            "main",
+            "--graphviz-only",
+            "--code",
+            code,
+            "--language",
+            "rust",
+        ]);
+        handle_args(args.clone(), &mut output1);
+        handle_args(args, &mut output2);
+        let output1 = String::from_utf8(output1).expect("Output array should be UTF-8");
+        let output2 = String::from_utf8(output2).expect("Output array should be UTF-8");
+        assert_eq!(output1, output2);
+
+        // Verify node IDs are sequential
+        let node_ids: Vec<_> = output1
+            .lines()
+            // filter out node connections which have ->
+            .filter(|line| line.starts_with("node_") && !line.contains("->"))
+            .map(|line| {
+                let id = line
+                    .split('[')
+                    .next()
+                    .unwrap()
+                    .trim()
+                    .strip_prefix("node_")
+                    .expect("Node ID should start with 'node_'")
+                    .parse::<usize>()
+                    .unwrap_or_else(|_| {
+                        eprintln!("Failed to parse node ID from string: {}", line);
+                        panic!("Node ID should be a valid number");
+                    });
+                id
+            })
+            .collect();
+
+        // Check that IDs start at 1 and are sequential
+        let mut expected_id = 1;
+        for &id in node_ids.iter() {
+            assert_eq!(
+                id, expected_id,
+                "Node IDs should be sequential starting from 1"
+            );
+            expected_id += 1;
+        }
+    }
 }
