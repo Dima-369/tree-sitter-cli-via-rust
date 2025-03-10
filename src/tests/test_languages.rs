@@ -1,4 +1,4 @@
-use super::common::run_test_with_highlights;
+use crate::tests::run_test_with_highlights;
 
 #[test]
 fn test_kotlin() {
