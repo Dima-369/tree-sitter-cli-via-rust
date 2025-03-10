@@ -1,5 +1,3 @@
-mod tests;
-
 use clap::{Arg, ArgAction, ArgMatches};
 use std::collections::HashMap;
 use std::io;
