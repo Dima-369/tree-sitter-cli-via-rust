@@ -7,7 +7,7 @@ use clap::{Arg, ArgAction, ArgMatches};
 use std::io;
 use std::io::Write;
 use std::process::exit;
-use tree_sitter::{Parser, StreamingIterator};
+use tree_sitter::Parser;
 
 pub fn get_command() -> clap::Command {
     clap::Command::new("Tree-sitter Syntax Highlighter")
