@@ -139,7 +139,7 @@ mod tests {
             "kotlin",
             tree_sitter_kotlin::HIGHLIGHTS_QUERY,
             r#"keyword 0 3
-variable 4 8
+void 4 8
 operator 9 10
 number 11 12
 "#,
@@ -273,11 +273,11 @@ punctuation.bracket 8 9
             "kotlin",
             tree_sitter_kotlin::HIGHLIGHTS_QUERY,
             r#"keyword 0 3
-variable 4 8
+void 4 8
 operator 9 10
 string 11 17
 keyword 18 21
-variable 22 26
+void 22 26
 operator 27 28
 string 29 35
 "#,
