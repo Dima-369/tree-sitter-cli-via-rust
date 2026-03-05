@@ -58,7 +58,7 @@ pub fn map_language_to_enum(language: &str) -> Language {
 
 pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: Language) {
     match language_enum {
-        Language::Kotlin => parser.set_language(&tree_sitter_kotlin::language()),
+        Language::Kotlin => parser.set_language(&tree_sitter_kotlin::LANGUAGE.into()),
         Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
         Language::Bash => parser.set_language(&tree_sitter_bash::LANGUAGE.into()),
         Language::Json => parser.set_language(&tree_sitter_json::LANGUAGE.into()),

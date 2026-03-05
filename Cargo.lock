@@ -399,11 +399,11 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-kotlin"
-version = "0.3.9"
-source = "git+https://github.com/fwcd/tree-sitter-kotlin.git?branch=main#c4ddea359a7ff4d92360b2efcd6cfce5dc25afe6"
+version = "0.4.0"
+source = "git+https://github.com/Dima-369/tree-sitter-kotlin.git?branch=main#4f035bb22651ad955c257f54b06005513a131ba7"
 dependencies = [
  "cc",
- "tree-sitter",
+ "tree-sitter-language",
 ]
 
 [[package]]
