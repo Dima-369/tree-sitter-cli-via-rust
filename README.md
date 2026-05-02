@@ -13,12 +13,53 @@ Outputs capture names with byte ranges or graphviz code using Tree-sitter for Ko
 Usage: tree-sitter-cli-via-rust [OPTIONS] --code <code> --language <language>
 
 Options:
-      --code <code>              The code to parse
-      --language <language>      [possible values: kotlin, php, bash, json, dockerfile, python, java, rust]
-      --highlights <highlights>  String of highlights like the content of queries/highlights.scm. This is required when not using --graphviz-only
-      --graphviz-only            If passed, output only the graphviz dot graph
-  -h, --help                     Print help
-  -V, --version                  Print version
+      --code <code>                  The code to parse
+      --language <language>          [possible values: kotlin, php, bash, json, dockerfile, python, java, rust, markdown, groovy, css, html, toml, lua]
+      --highlights <highlights>      String of highlights like the content of queries/highlights.scm. This is required when not using --graphviz-only
+      --highlights-file <highlights-file>  Path to a highlights file (e.g., queries/highlights.scm). Alternative to --highlights.
+      --graphviz-only                If passed, output only the graphviz dot graph
+  -h, --help                       Print help
+  -V, --version                    Print version
+```
+
+The format is one per line: `{captureName} {byteRangeStart} {byteRangeEnd}`
+
+# Examples
+
+## Basic highlighting with `--highlights-file`
+
+```bash
+# Parse markdown and highlight using a highlights file
+tree-sitter-cli-via-rust --language markdown --code "# Heading" --highlights-file path/to/highlights.scm
+# Output:
+# punctuation.special 0 1
+# text.title 2 9
+```
+
+## Using `--highlights` with file content
+
+```bash
+# Alternative: pass file content directly
+tree-sitter-cli-via-rust --language markdown --code "# Heading" --highlights "$(cat path/to/highlights.scm)"
+```
+
+## Graphviz output
+
+```bash
+# Generate graphviz dot graph
+tree-sitter-cli-via-rust --language python --code "def hello(): pass" --graphviz-only
+```
+
+## Error handling
+
+```bash
+# Missing file error
+tree-sitter-cli-via-rust --language markdown --code "# test" --highlights-file /nonexistent/file.scm
+# Error: Error reading highlights file '/nonexistent/file.scm': No such file or directory (os error 2)
+
+# Cannot use both flags simultaneously
+tree-sitter-cli-via-rust --language markdown --code "# test" --highlights "test" --highlights-file test.scm
+# Error: Error: Cannot use both --highlights and --highlights-file simultaneously
 ```
 
 # Output
