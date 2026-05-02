@@ -1,9 +1,9 @@
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Parser, Query, StreamingIterator, Tree};
-use tree_sitter_md::LANGUAGE;
+use tree_sitter_md::{INLINE_LANGUAGE, LANGUAGE};
 
-pub static LANGUAGES: [&str; 15] = [
+pub static LANGUAGES: [&str; 16] = [
     "kotlin",
     "php",
     "bash",
@@ -19,6 +19,7 @@ pub static LANGUAGES: [&str; 15] = [
     "html",
     "javascript",
     "markdown",
+    "markdown-inline",
 ];
 
 pub enum Language {
@@ -37,6 +38,7 @@ pub enum Language {
     Html,
     Javascript,
     Markdown,
+    MarkdownInline,
 }
 
 pub fn map_language_to_enum(language: &str) -> Language {
@@ -56,6 +58,7 @@ pub fn map_language_to_enum(language: &str) -> Language {
         "html" => Language::Html,
         "javascript" => Language::Javascript,
         "markdown" => Language::Markdown,
+        "markdown-inline" => Language::MarkdownInline,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -77,6 +80,7 @@ pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enu
         Language::Html => parser.set_language(&tree_sitter_html::LANGUAGE.into()),
         Language::Javascript => parser.set_language(&tree_sitter_javascript::LANGUAGE.into()),
         Language::Markdown => parser.set_language(&LANGUAGE.into()),
+        Language::MarkdownInline => parser.set_language(&INLINE_LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
@@ -369,6 +373,28 @@ punctuation.delimiter 14 15
             tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
             // The "#" marker is captured as punctuation.special
             "punctuation.special 0 1\ntext.title 2 9\n",
+        )
+    }
+
+    #[test]
+    fn test_markdown_inline() {
+        // Bold, italic, and inline code are produced by the inline grammar.
+        run_test_with_highlights(
+            "**bold** *italic* `code`",
+            "markdown-inline",
+            tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
+            r#"text.strong 0 8
+punctuation.delimiter 0 1
+punctuation.delimiter 1 2
+punctuation.delimiter 6 7
+punctuation.delimiter 7 8
+text.emphasis 9 17
+punctuation.delimiter 9 10
+punctuation.delimiter 16 17
+text.literal 18 24
+punctuation.delimiter 18 19
+punctuation.delimiter 23 24
+"#,
         )
     }
 }

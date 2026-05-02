@@ -14,7 +14,7 @@ Usage: tree-sitter-cli-via-rust [OPTIONS] --code <code> --language <language>
 
 Options:
       --code <code>                  The code to parse
-      --language <language>          [possible values: kotlin, php, bash, json, dockerfile, python, java, rust, markdown, groovy, css, html, toml, lua]
+      --language <language>          [possible values: kotlin, php, bash, json, dockerfile, python, java, rust, lua, toml, groovy, css, html, javascript, markdown, markdown-inline]
       --highlights <highlights>      String of highlights like the content of queries/highlights.scm. This is required when not using --graphviz-only
       --highlights-file <highlights-file>  Path to a highlights file (e.g., queries/highlights.scm). Alternative to --highlights.
       --graphviz-only                If passed, output only the graphviz dot graph
