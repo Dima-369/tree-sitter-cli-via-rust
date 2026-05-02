@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Parser, Query, StreamingIterator, Tree};
-use tree_sitter_md;
+use tree_sitter_md::LANGUAGE;
 
 pub static LANGUAGES: [&str; 15] = [
     "kotlin",
@@ -76,7 +76,7 @@ pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enu
         Language::Css => parser.set_language(&tree_sitter_css::LANGUAGE.into()),
         Language::Html => parser.set_language(&tree_sitter_html::LANGUAGE.into()),
         Language::Javascript => parser.set_language(&tree_sitter_javascript::LANGUAGE.into()),
-        Language::Markdown => parser.set_language(&tree_sitter_md::LANGUAGE.into()),
+        Language::Markdown => parser.set_language(&LANGUAGE.into()),
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
@@ -368,7 +368,7 @@ punctuation.delimiter 14 15
             "markdown",
             tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
             // The "#" marker is captured as punctuation.special
-            "punctuation.special 0 1\ntext.title 2 9\n"
+            "punctuation.special 0 1\ntext.title 2 9\n",
         )
     }
 }
