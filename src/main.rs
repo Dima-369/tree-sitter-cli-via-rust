@@ -72,7 +72,6 @@ where
         exit(1);
     };
 
-    if !graphviz_only {}
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
