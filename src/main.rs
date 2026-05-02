@@ -32,6 +32,11 @@ pub fn get_command() -> clap::Command {
                 .help("String of highlights like the content of queries/highlights.scm. This is required when not using --graphviz-only")
         )
         .arg(
+            Arg::new("highlights-file")
+                .long("highlights-file")
+                .help("Path to a highlights file (e.g., queries/highlights.scm). Alternative to --highlights.")
+        )
+        .arg(
             Arg::new("graphviz-only")
                 .long("graphviz-only")
                 .action(ArgAction::SetTrue)
@@ -47,10 +52,27 @@ where
     let language = args.get_one::<String>("language").unwrap();
     let graphviz_only = args.get_one::<bool>("graphviz-only").unwrap();
     let highlights = args.get_one::<String>("highlights");
-    if !graphviz_only && highlights.is_none() {
-        eprintln!("--highlights is required when not using --graphviz-only");
+    let highlights_file = args.get_one::<String>("highlights-file");
+
+    let highlights_content = if highlights.is_some() && highlights_file.is_some() {
+        eprintln!("Error: Cannot use both --highlights and --highlights-file simultaneously");
         exit(1);
-    }
+    } else if let Some(file_path) = highlights_file {
+        match std::fs::read_to_string(file_path) {
+            Ok(content) => content,
+            Err(e) => {
+                eprintln!("Error reading highlights file '{}': {}", file_path, e);
+                exit(1);
+            }
+        }
+    } else if let Some(h) = highlights {
+        h.clone()
+    } else {
+        eprintln!("--highlights or --highlights-file is required when not using --graphviz-only");
+        exit(1);
+    };
+
+    if !graphviz_only {}
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
@@ -65,7 +87,7 @@ where
         write!(writer, "{}", generate_dot_graph(&tree, &code))
             .expect("writing dot graph should succeed");
     } else {
-        process_query(parser, highlights.unwrap(), &tree, &code, &mut writer);
+        process_query(parser, &highlights_content, &tree, &code, &mut writer);
     }
 }
 
