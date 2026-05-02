@@ -54,12 +54,18 @@ where
     let mut parser = Parser::new();
     let language_enum = map_language_to_enum(language);
     set_parser_language(&language, &mut parser, language_enum);
-    let tree = parser.parse(code, None).unwrap();
+    // Markdown grammar requires trailing newline to properly capture headings
+    let code = if language == "markdown" && !code.ends_with('\n') {
+        format!("{}\n", code)
+    } else {
+        code.clone()
+    };
+    let tree = parser.parse(&code, None).unwrap();
     if *graphviz_only {
-        write!(writer, "{}", generate_dot_graph(&tree, code))
+        write!(writer, "{}", generate_dot_graph(&tree, &code))
             .expect("writing dot graph should succeed");
     } else {
-        process_query(parser, highlights.unwrap(), &tree, code, &mut writer);
+        process_query(parser, highlights.unwrap(), &tree, &code, &mut writer);
     }
 }
 

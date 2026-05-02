@@ -1,8 +1,9 @@
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Parser, Query, StreamingIterator, Tree};
+use tree_sitter_md;
 
-pub static LANGUAGES: [&str; 14] = [
+pub static LANGUAGES: [&str; 15] = [
     "kotlin",
     "php",
     "bash",
@@ -17,6 +18,7 @@ pub static LANGUAGES: [&str; 14] = [
     "css",
     "html",
     "javascript",
+    "markdown",
 ];
 
 pub enum Language {
@@ -34,6 +36,7 @@ pub enum Language {
     Css,
     Html,
     Javascript,
+    Markdown,
 }
 
 pub fn map_language_to_enum(language: &str) -> Language {
@@ -52,6 +55,7 @@ pub fn map_language_to_enum(language: &str) -> Language {
         "css" => Language::Css,
         "html" => Language::Html,
         "javascript" => Language::Javascript,
+        "markdown" => Language::Markdown,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -72,12 +76,18 @@ pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enu
         Language::Css => parser.set_language(&tree_sitter_css::LANGUAGE.into()),
         Language::Html => parser.set_language(&tree_sitter_html::LANGUAGE.into()),
         Language::Javascript => parser.set_language(&tree_sitter_javascript::LANGUAGE.into()),
+        Language::Markdown => parser.set_language(&tree_sitter_md::LANGUAGE.into()),
     }
-        .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
+    .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
 
-pub fn process_query<W>(parser: Parser, highlights: &str, tree: &Tree, code: &String, writer: &mut W)
-where
+pub fn process_query<W>(
+    parser: Parser,
+    highlights: &str,
+    tree: &Tree,
+    code: &String,
+    writer: &mut W,
+) where
     W: Write,
 {
     let parser_language = parser.language().unwrap();
@@ -101,7 +111,7 @@ where
                 node.byte_range().start,
                 node.byte_range().end
             )
-                .expect("write should succeed");
+            .expect("write should succeed");
         }
     }
 }
@@ -130,7 +140,6 @@ mod tests {
         let output = String::from_utf8(output).expect("Output array should be UTF-8");
         assert_eq!(expected_output, output);
     }
-
 
     #[test]
     fn test_kotlin() {
@@ -351,4 +360,15 @@ punctuation.delimiter 14 15
         )
     }
 
+    #[test]
+    fn test_markdown() {
+        // Test a simple ATX heading
+        run_test_with_highlights(
+            "# Heading",
+            "markdown",
+            tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
+            // The "#" marker is captured as punctuation.special
+            "punctuation.special 0 1\ntext.title 2 9\n"
+        )
+    }
 }
