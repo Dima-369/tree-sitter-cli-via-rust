@@ -1,7 +1,13 @@
 use std::io::Write;
 use std::process::exit;
-use tree_sitter::{Parser, Query, StreamingIterator, Tree};
+use tree_sitter::{Parser, Query, QueryCursor, StreamingIterator, Tree};
 use tree_sitter_md::{INLINE_LANGUAGE, LANGUAGE};
+
+pub struct QueryHighlight {
+    pub capture: String,
+    pub start_byte: usize,
+    pub end_byte: usize,
+}
 
 pub static LANGUAGES: [&str; 16] = [
     "kotlin",
@@ -63,7 +69,7 @@ pub fn map_language_to_enum(language: &str) -> Language {
     }
 }
 
-pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enum: Language) {
+pub fn set_parser_language(language: &str, parser: &mut Parser, language_enum: Language) {
     match language_enum {
         Language::Kotlin => parser.set_language(&tree_sitter_kotlin::LANGUAGE.into()),
         Language::Php => parser.set_language(&tree_sitter_php::LANGUAGE_PHP.into()),
@@ -85,39 +91,53 @@ pub fn set_parser_language(language: &&String, parser: &mut Parser, language_enu
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
 
-pub fn process_query<W>(
-    parser: Parser,
-    highlights: &str,
-    tree: &Tree,
-    code: &String,
-    writer: &mut W,
-) where
+pub fn process_query<W>(parser: &Parser, highlights: &str, tree: &Tree, code: &str, writer: &mut W)
+where
     W: Write,
 {
-    let parser_language = parser.language().unwrap();
-    let query = match Query::new(&parser_language, highlights) {
-        Ok(query) => query,
-        Err(_) => {
-            eprintln!("Failed to create query for passed highlights");
+    let mut query_cursor = QueryCursor::new();
+    match query_highlights(parser, highlights, tree, code, &mut query_cursor) {
+        Ok(query_highlights) => {
+            for highlight in query_highlights {
+                writeln!(
+                    writer,
+                    "{} {} {}",
+                    highlight.capture, highlight.start_byte, highlight.end_byte
+                )
+                .expect("write should succeed");
+            }
+        }
+        Err(error) => {
+            eprintln!("{}", error);
             exit(1);
         }
-    };
-    let mut query_cursor = tree_sitter::QueryCursor::new();
+    }
+}
+
+pub fn query_highlights(
+    parser: &Parser,
+    highlights: &str,
+    tree: &Tree,
+    code: &str,
+    query_cursor: &mut QueryCursor,
+) -> Result<Vec<QueryHighlight>, String> {
+    let parser_language = parser.language().unwrap();
+    let query = Query::new(&parser_language, highlights)
+        .map_err(|_| "Failed to create query for passed highlights".to_string())?;
     let mut matches = query_cursor.matches(&query, tree.root_node(), code.as_bytes());
+    let mut query_highlights = Vec::new();
     while let Some(m) = matches.next() {
         for capture in m.captures {
             let node = capture.node;
             let capture_name = query.capture_names()[capture.index as usize];
-            writeln!(
-                writer,
-                "{} {} {}",
-                capture_name,
-                node.byte_range().start,
-                node.byte_range().end
-            )
-            .expect("write should succeed");
+            query_highlights.push(QueryHighlight {
+                capture: capture_name.to_string(),
+                start_byte: node.byte_range().start,
+                end_byte: node.byte_range().end,
+            });
         }
     }
+    Ok(query_highlights)
 }
 
 #[cfg(test)]
