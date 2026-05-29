@@ -28,8 +28,11 @@ struct DaemonResponse {
 
 #[derive(serde::Serialize)]
 struct DaemonHighlight {
+    #[serde(rename = "c")]
     capture: String,
+    #[serde(rename = "s")]
     start_byte: usize,
+    #[serde(rename = "e")]
     end_byte: usize,
 }
 

@@ -50,6 +50,10 @@ tree-sitter-cli-via-rust --language markdown --code "# Heading" --highlights "$(
 tree-sitter-cli-via-rust --language python --code "def hello(): pass" --graphviz-only
 ```
 
+## Daemon mode
+
+`--daemon` keeps one process alive and exchanges JSON-lines requests/responses over stdin/stdout. Highlight response entries use compact keys to reduce IPC overhead: `c` for capture name, `s` for start byte, and `e` for end byte.
+
 ## Error handling
 
 ```bash
