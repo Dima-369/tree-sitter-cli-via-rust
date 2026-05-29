@@ -312,6 +312,8 @@ name = "tree-sitter-cli-via-rust"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "serde",
+ "serde_json",
  "tree-sitter",
  "tree-sitter-bash",
  "tree-sitter-css",
