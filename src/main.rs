@@ -4,11 +4,12 @@ mod languages;
 use crate::graphviz::generate_dot_graph;
 use crate::languages::{map_language_to_enum, process_query, set_parser_language, LANGUAGES};
 use clap::{Arg, ArgAction, ArgMatches};
+use std::collections::HashMap;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
 use std::process::exit;
-use tree_sitter::{Parser, QueryCursor};
+use tree_sitter::{Parser, Query, QueryCursor};
 
 #[derive(serde::Deserialize)]
 struct DaemonRequest {
@@ -138,9 +139,10 @@ where
     let mut writer = io::BufWriter::new(writer);
     let mut parser = Parser::new();
     let mut query_cursor = QueryCursor::new();
+    let mut query_cache: HashMap<String, Query> = HashMap::new();
     for line in reader.lines() {
         let response = match line {
-            Ok(line) => handle_daemon_line(&line, &mut parser, &mut query_cursor),
+            Ok(line) => handle_daemon_line(&line, &mut parser, &mut query_cursor, &mut query_cache),
             Err(e) => DaemonResponse {
                 id: 0,
                 highlights: Vec::new(),
@@ -158,6 +160,7 @@ fn handle_daemon_line(
     line: &str,
     parser: &mut Parser,
     query_cursor: &mut QueryCursor,
+    query_cache: &mut HashMap<String, Query>,
 ) -> DaemonResponse {
     let request: DaemonRequest = match serde_json::from_str(line) {
         Ok(request) => request,
@@ -196,6 +199,7 @@ fn handle_daemon_line(
         &tree,
         &code,
         query_cursor,
+        query_cache,
     ) {
         Ok(highlights) => highlights
             .into_iter()

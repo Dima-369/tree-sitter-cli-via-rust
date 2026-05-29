@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Parser, Query, QueryCursor, StreamingIterator, Tree};
@@ -96,7 +97,15 @@ where
     W: Write,
 {
     let mut query_cursor = QueryCursor::new();
-    match query_highlights(parser, highlights, tree, code, &mut query_cursor) {
+    let mut query_cache = HashMap::new();
+    match query_highlights(
+        parser,
+        highlights,
+        tree,
+        code,
+        &mut query_cursor,
+        &mut query_cache,
+    ) {
         Ok(query_highlights) => {
             for highlight in query_highlights {
                 writeln!(
@@ -120,11 +129,19 @@ pub fn query_highlights(
     tree: &Tree,
     code: &str,
     query_cursor: &mut QueryCursor,
+    query_cache: &mut HashMap<String, Query>,
 ) -> Result<Vec<QueryHighlight>, String> {
     let parser_language = parser.language().unwrap();
-    let query = Query::new(&parser_language, highlights)
-        .map_err(|_| "Failed to create query for passed highlights".to_string())?;
-    let mut matches = query_cursor.matches(&query, tree.root_node(), code.as_bytes());
+    if !query_cache.contains_key(highlights) {
+        match Query::new(&parser_language, highlights) {
+            Ok(q) => {
+                query_cache.insert(highlights.to_string(), q);
+            }
+            Err(e) => return Err(format!("Failed to create query for passed highlights: {e}")),
+        }
+    }
+    let query = query_cache.get(highlights).unwrap();
+    let mut matches = query_cursor.matches(query, tree.root_node(), code.as_bytes());
     let mut query_highlights = Vec::new();
     while let Some(m) = matches.next() {
         for capture in m.captures {
