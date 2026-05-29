@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::io::Write;
 use std::process::exit;
@@ -132,15 +133,14 @@ pub fn query_highlights(
     query_cache: &mut HashMap<String, Query>,
 ) -> Result<Vec<QueryHighlight>, String> {
     let parser_language = parser.language().unwrap();
-    if !query_cache.contains_key(highlights) {
-        match Query::new(&parser_language, highlights) {
-            Ok(q) => {
-                query_cache.insert(highlights.to_string(), q);
-            }
-            Err(e) => return Err(format!("Failed to create query for passed highlights: {e}")),
+    let query = match query_cache.entry(highlights.to_string()) {
+        Entry::Occupied(entry) => entry.into_mut(),
+        Entry::Vacant(entry) => {
+            let q = Query::new(&parser_language, highlights)
+                .map_err(|e| format!("Failed to create query for passed highlights: {e}"))?;
+            entry.insert(q)
         }
-    }
-    let query = query_cache.get(highlights).unwrap();
+    };
     let mut matches = query_cursor.matches(query, tree.root_node(), code.as_bytes());
     let mut query_highlights = Vec::new();
     while let Some(m) = matches.next() {
