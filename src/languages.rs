@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::process::exit;
 use tree_sitter::{Parser, Query, QueryCursor, StreamingIterator, Tree};
+use tree_sitter_language::LanguageFn;
 use tree_sitter_md::{INLINE_LANGUAGE, LANGUAGE};
 
 pub struct QueryHighlight {
@@ -11,7 +12,7 @@ pub struct QueryHighlight {
     pub end_byte: usize,
 }
 
-pub static LANGUAGES: [&str; 16] = [
+pub static LANGUAGES: [&str; 17] = [
     "kotlin",
     "php",
     "bash",
@@ -28,6 +29,7 @@ pub static LANGUAGES: [&str; 16] = [
     "javascript",
     "markdown",
     "markdown-inline",
+    "typst",
 ];
 
 pub enum Language {
@@ -47,6 +49,7 @@ pub enum Language {
     Javascript,
     Markdown,
     MarkdownInline,
+    Typst,
 }
 
 pub fn map_language_to_enum(language: &str) -> Language {
@@ -67,6 +70,7 @@ pub fn map_language_to_enum(language: &str) -> Language {
         "javascript" => Language::Javascript,
         "markdown" => Language::Markdown,
         "markdown-inline" => Language::MarkdownInline,
+        "typst" => Language::Typst,
         _ => panic!("Unsupported language: {}", language),
     }
 }
@@ -89,6 +93,12 @@ pub fn set_parser_language(language: &str, parser: &mut Parser, language_enum: L
         Language::Javascript => parser.set_language(&tree_sitter_javascript::LANGUAGE.into()),
         Language::Markdown => parser.set_language(&LANGUAGE.into()),
         Language::MarkdownInline => parser.set_language(&INLINE_LANGUAGE.into()),
+        Language::Typst => {
+            // The typst grammar crate still uses the old tree-sitter 0.20 bindings, so link the
+            // raw C symbol and wrap it in the modern LanguageFn/Language types.
+            let language_fn = unsafe { LanguageFn::from_raw(tree_sitter_typst) };
+            parser.set_language(&tree_sitter::Language::from(language_fn))
+        }
     }
     .unwrap_or_else(|_| panic!("Error loading {} grammar", language))
 }
@@ -155,6 +165,17 @@ pub fn query_highlights(
         }
     }
     Ok(query_highlights)
+}
+
+// Referencing the crate is required for cargo to link its build-script-compiled C parser
+// (libparser.a), because no Rust symbol from the crate is used directly.
+const _TYPST_PARSER_LINK: &str = tree_sitter_typst::NODE_TYPES;
+
+extern "C" {
+    // Compiled by the tree-sitter-typst crate's build script; the crate's own Rust bindings
+    // return the old tree-sitter 0.20 Language type, which cannot be passed to the
+    // tree-sitter 0.25 runtime used here.
+    fn tree_sitter_typst() -> *const ();
 }
 
 #[cfg(test)]

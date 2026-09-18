@@ -188,13 +188,11 @@ mod tests {
             .collect();
 
         // Check that IDs start at 1 and are sequential
-        let mut expected_id = 1;
-        for &id in node_ids.iter() {
+        for (expected_id, &id) in (1..).zip(node_ids.iter()) {
             assert_eq!(
                 id, expected_id,
                 "Node IDs should be sequential starting from 1"
             );
-            expected_id += 1;
         }
     }
 }

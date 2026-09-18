@@ -285,6 +285,16 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e747b1f9b7b931ed39a548c1fae149101497de3c1fc8d9e18c62c1a66c683d3d"
+dependencies = [
+ "cc",
+ "regex",
+]
+
+[[package]]
+name = "tree-sitter"
 version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4"
@@ -314,7 +324,7 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
- "tree-sitter",
+ "tree-sitter 0.25.2",
  "tree-sitter-bash",
  "tree-sitter-css",
  "tree-sitter-dockerfile",
@@ -324,12 +334,14 @@ dependencies = [
  "tree-sitter-javascript",
  "tree-sitter-json",
  "tree-sitter-kotlin",
+ "tree-sitter-language",
  "tree-sitter-lua",
  "tree-sitter-md",
  "tree-sitter-php",
  "tree-sitter-python",
  "tree-sitter-rust",
  "tree-sitter-toml",
+ "tree-sitter-typst",
 ]
 
 [[package]]
@@ -348,7 +360,7 @@ version = "0.2.0"
 source = "git+https://github.com/Dima-369/tree-sitter-dockerfile?branch=main#f6ed638885a72b3d242eebf7d2ed399d627b9ea0"
 dependencies = [
  "cc",
- "tree-sitter",
+ "tree-sitter 0.25.2",
 ]
 
 [[package]]
@@ -471,6 +483,15 @@ source = "git+https://github.com/Dima-369/tree-sitter-toml?branch=master#4ed3af0
 dependencies = [
  "cc",
  "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-typst"
+version = "0.0.1"
+source = "git+https://github.com/uben0/tree-sitter-typst?branch=master#46cf4ded12ee974a70bf8457263b67ad7ee0379d"
+dependencies = [
+ "cc",
+ "tree-sitter 0.20.10",
 ]
 
 [[package]]
